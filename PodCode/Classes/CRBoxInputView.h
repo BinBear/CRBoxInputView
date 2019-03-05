@@ -58,8 +58,14 @@ typedef void(^TextDidChangeblock)(NSString *text, BOOL isFinished);
 @property (strong, nonatomic) CRBoxInputCellProperty *customCellProperty;
 @property (strong, nonatomic, readonly) NSString  *textValue;
 
+// loadAndPrepareView is default beginEdit to YES.
 - (void)loadAndPrepareView;
+- (void)loadAndPrepareViewWithBeginEdit:(BOOL)beginEdit;
+
+// clearAll is default beginEdit to YES.
 - (void)clearAll;
+- (void)clearAllWithBeginEdit:(BOOL)beginEdit;
+
 - (UICollectionView *)mainCollectionView;
 
 // Qiuck set

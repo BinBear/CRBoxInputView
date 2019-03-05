@@ -4,16 +4,25 @@
 [![License](https://img.shields.io/cocoapods/l/CRBoxInputView.svg?style=flat)](https://cocoapods.org/pods/CRBoxInputView)
 [![Platform](https://img.shields.io/cocoapods/p/CRBoxInputView.svg?style=flat)](https://cocoapods.org/pods/CRBoxInputView)
 
-> 该组件可以在短信验证码，密码输入框，或者手机号码输入框这些场景中使用。支持iOS12短信验证码自动填充。<br/>希望你可以喜欢！
+### [中文文档](https://github.com/CRAnimation/CRBoxInputView#Header_Start) [/ English Document](https://github.com/CRAnimation/CRBoxInputView/blob/master/README_en.md#Header_Start)
 
-### [中文文档](https://github.com/CRAnimation/CRBoxInputView#Header_Start) [/ English](https://github.com/CRAnimation/CRBoxInputView/blob/master/README_en.md#Header_Start)
+
+## 组件特点
+- 支持iOS12短信验证码自动填充
+- 支持`Masonry`
+- 支持密文显示
+- 支持自定义密文图片/view
+- 支持iOS8及以上操作系统
+
+> 该组件适用于短信验证码，密码输入框，手机号码输入框这些场景。<br/>希望你可以喜欢！
+
 
 ## Pod安装
 
 CRBoxInputView 可以通过 [CocoaPods](https://cocoapods.org). 来安装,  只需简单的在你的 Podfile 中添加如下代码:
 
 ```ruby
-pod 'CRBoxInputView'
+pod 'CRBoxInputView', '0.1.6'
 ```
 
 
@@ -42,8 +51,21 @@ pod 'CRBoxInputView'
 在需要使用的地方插入如下代码
 ``` objc
 CRBoxInputView *boxInputView = [[CRBoxInputView alloc] initWithFrame:CGRectMake(0, 0, 200, 50)];
-[boxInputView loadAndPrepareView];
+boxInputView.codeLength = 4;
+[boxInputView loadAndPrepareViewWithBeginEdit:YES]; // BeginEdit:是否自动启用编辑模式
 [self.view addSubview:boxInputView];
+
+// 获取值
+// 方法1, 当输入文字变化时触发回调block
+boxInputView.textDidChangeblock = ^(NSString *text, BOOL isFinished) {
+    NSLog(@"text:%@", text);
+};
+// 方法2, 普通的只读属性
+NSLog(@"textValue:%@", boxInputView.textValue);
+
+// 清空
+[boxInputView clearAllWithBeginEdit:YES]; // BeginEdit:清空后是否自动启用编辑模式
+
 ```
 
 
@@ -394,8 +416,22 @@ default: nil
 @property (strong, nonatomic) CRBoxInputCellProperty *customCellProperty;
 @property (strong, nonatomic, readonly) NSString  *textValue;
 
+/**
+装载数据和准备界面
+beginEdit: 自动开启编辑模式
+default: YES
+*/
 - (void)loadAndPrepareView;
+- (void)loadAndPrepareViewWithBeginEdit:(BOOL)beginEdit;
+
+/**
+清空输入
+beginEdit: 自动开启编辑模式
+default: YES
+*/
 - (void)clearAll;
+- (void)clearAllWithBeginEdit:(BOOL)beginEdit;
+
 - (UICollectionView *)mainCollectionView;
 
 // 快速设置
@@ -416,7 +452,10 @@ default: nil
 
 ## 其他问题
 
-- [pod search 搜索不到库（已解决）](https://github.com/CRAnimation/CRBoxInputView/issues/1 "pod search 搜索不到库") 
+- [pod search 搜索不到库（已解决）](https://github.com/CRAnimation/CRBoxInputView/issues/1 "pod search 搜索不到库")
+- [pod 安装失败， [!] Unable to find a specification for CRBoxInputView（已解决）](https://github.com/CRAnimation/CRBoxInputView/issues/2 "pod 安装失败， [!] Unable to find a specification for CRBoxInputView")
+- 请小伙伴从0.1.6版本开始使用,`pod install`可以正常安装。
+- 在早期版本中存在一些安装的问题，我为由此带来的不便感到抱歉。
 
 ## 作者
 

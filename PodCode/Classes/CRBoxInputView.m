@@ -16,9 +16,10 @@ typedef NS_ENUM(NSInteger, CRBoxTextChangeType) {
     CRBoxTextChangeType_Delete,
 };
 
-@interface CRBoxInputView () <UICollectionViewDataSource, UICollectionViewDelegate>
+@interface CRBoxInputView () <UICollectionViewDataSource, UICollectionViewDelegate, UITextFieldDelegate>
 {
     NSInteger _oldLength;
+    BOOL _ifNeedBeginEdit;
 }
 
 @property (nonatomic, strong) CRBoxTextView *textView;
@@ -59,10 +60,15 @@ typedef NS_ENUM(NSInteger, CRBoxTextChangeType) {
     self.keyBoardType = UIKeyboardTypeNumberPad;
     self.backgroundColor = [UIColor clearColor];
     _valueArr = [NSMutableArray new];
-    [self beginEdit];
+    _ifNeedBeginEdit = NO;
 }
 
 - (void)loadAndPrepareView
+{
+    [self loadAndPrepareViewWithBeginEdit:YES];
+}
+
+- (void)loadAndPrepareViewWithBeginEdit:(BOOL)beginEdit
 {
     if (_codeLength<=0) {
         NSAssert(NO, @"请输入大于0的验证码位数");
@@ -82,6 +88,10 @@ typedef NS_ENUM(NSInteger, CRBoxTextChangeType) {
     [self.textView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.mas_equalTo(UIEdgeInsetsZero);
     }];
+    
+    if (beginEdit) {
+        [self beginEdit];
+    }
 }
 
 - (void)generateCellPropertyArr
@@ -90,6 +100,19 @@ typedef NS_ENUM(NSInteger, CRBoxTextChangeType) {
     for (int i = 0; i < self.codeLength; i++) {
         [self.cellPropertyArr addObject:[self.customCellProperty copy]];
     }
+}
+
+#pragma mark - UITextFieldDelegate
+- (void)textFieldDidBeginEditing:(UITextField *)textField
+{
+    _ifNeedBeginEdit = YES;
+    [self.mainCollectionView reloadData];
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField
+{
+    _ifNeedBeginEdit = NO;
+    [self.mainCollectionView reloadData];
 }
 
 #pragma mark - TextViewEdit
@@ -101,21 +124,29 @@ typedef NS_ENUM(NSInteger, CRBoxTextChangeType) {
     [self.textView resignFirstResponder];
 }
 
-- (void)clearAll{
+- (void)clearAll
+{
+    [self clearAllWithBeginEdit:YES];
+}
+
+- (void)clearAllWithBeginEdit:(BOOL)beginEdit
+{
     _oldLength = 0;
     [_valueArr removeAllObjects];
     self.textView.text = @"";
     [self closeAllSecurityShow];
     [self.mainCollectionView reloadData];
     [self triggerBlock];
-    [self beginEdit];
+    
+    if (beginEdit) {
+        [self beginEdit];
+    }
 }
 
 #pragma mark - UITextFieldDidChange
 - (void)textDidChange:(UITextField *)textField{
     
     NSString *verStr = textField.text;
-    NSLog(@"--verStr:%@", verStr);
     
     //有空格去掉空格
     verStr = [verStr stringByReplacingOccurrencesOfString:@" " withString:@""];
@@ -150,8 +181,8 @@ typedef NS_ENUM(NSInteger, CRBoxTextChangeType) {
     }
     [_mainCollectionView reloadData];
     
-    [self triggerBlock];
     _oldLength = verStr.length;
+    [self triggerBlock];
 }
 
 #pragma mark - Control security show
@@ -256,7 +287,12 @@ typedef NS_ENUM(NSInteger, CRBoxTextChangeType) {
         }
         
         cell.boxInputCellProperty = cellProperty;
-        cell.selected = indexPath.row == focusIndex ? YES : NO;
+        
+        if (_ifNeedBeginEdit) {
+            cell.selected = indexPath.row == focusIndex ? YES : NO;
+        }else{
+            cell.selected = NO;
+        }
     }
     
     return tempCell;
@@ -323,6 +359,7 @@ typedef NS_ENUM(NSInteger, CRBoxTextChangeType) {
         _textView.tintColor = [UIColor clearColor];
         _textView.backgroundColor = [UIColor clearColor];
         _textView.textColor = [UIColor clearColor];
+        _textView.delegate = self;
         [_textView addTarget:self action:@selector(textDidChange:) forControlEvents:UIControlEventEditingChanged];
     }
     return _textView;

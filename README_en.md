@@ -4,9 +4,19 @@
 [![License](https://img.shields.io/cocoapods/l/CRBoxInputView.svg?style=flat)](https://cocoapods.org/pods/CRBoxInputView)
 [![Platform](https://img.shields.io/cocoapods/p/CRBoxInputView.svg?style=flat)](https://cocoapods.org/pods/CRBoxInputView)
 
-> You can use this widget for verify code, password input or phone number input. It support verify code auto fill in iOS12.<br/>I hope you can like this!
 
-### [中文文档](https://github.com/CRAnimation/CRBoxInputView#Header_Start) [/ English](https://github.com/CRAnimation/CRBoxInputView/blob/master/README_en.md#Header_Start)
+### [中文文档](https://github.com/CRAnimation/CRBoxInputView#Header_Start) [/ English Document](https://github.com/CRAnimation/CRBoxInputView/blob/master/README_en.md#Header_Start)
+
+
+## Feature
+-  Support verify code auto fill in iOS12
+-  Support `Masonry`
+-  Support security type
+-  Support custom security image / view
+-  Support iOS8  and over
+
+> You can use this widget for verify code, password input or phone number input.<br/>I hope you can like this!
+
 
 ## Installation
 
@@ -14,7 +24,7 @@ CRBoxInputView is available through [CocoaPods](https://cocoapods.org). To insta
 it, simply add the following line to your Podfile:
 
 ```ruby
-pod 'CRBoxInputView'
+pod 'CRBoxInputView', '0.1.6'
 ```
 
 
@@ -43,8 +53,20 @@ To run the example project, clone the repo, and run `pod install` from the Examp
 Insert code where you need.
 ``` objc
 CRBoxInputView *boxInputView = [[CRBoxInputView alloc] initWithFrame:CGRectMake(0, 0, 200, 50)];
-[boxInputView loadAndPrepareView];
+boxInputView.codeLength = 4;
+[boxInputView loadAndPrepareViewWithBeginEdit:YES]; // BeginEdit: If need begin edit.
 [self.view addSubview:boxInputView];
+
+// Get value
+// func1, call back block when input text did change
+boxInputView.textDidChangeblock = ^(NSString *text, BOOL isFinished) {
+    NSLog(@"text:%@", text);
+};
+// func2, normal readonly property
+NSLog(@"textValue:%@", boxInputView.textValue);
+
+// Clear all
+[boxInputView clearAllWithBeginEdit:YES]; // BeginEdit: If need begin edit after clear all.
 ```
 
 
@@ -397,6 +419,23 @@ default: nil
 
 - (void)loadAndPrepareView;
 - (void)clearAll;
+
+/**
+loadAndPrepareView
+beginEdit: If need begin edit
+default: YES
+*/
+- (void)loadAndPrepareView;
+- (void)loadAndPrepareViewWithBeginEdit:(BOOL)beginEdit;
+
+/**
+clearAll
+beginEdit: If need begin edit
+default: YES
+*/
+- (void)clearAll;
+- (void)clearAllWithBeginEdit:(BOOL)beginEdit;
+
 - (UICollectionView *)mainCollectionView;
 
 // Qiuck set
@@ -418,6 +457,9 @@ default: nil
 ## Other Problems
 
 - [pod search unable find a pod（already solved）](https://github.com/CRAnimation/CRBoxInputView/issues/1 "pod search unable find a pod") 
+- [pod installation failed， [!] Unable to find a specification for CRBoxInputView（already solved）](https://github.com/CRAnimation/CRBoxInputView/issues/2 "pod installation failed， [!] Unable to find a specification for CRBoxInputView")
+- Please use it start with v0.1.6, and you can install normally through `pod install`.
+- In Early vesions, it have some problems about install. Sorry for it. 
 
 ## Author
 

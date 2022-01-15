@@ -12,11 +12,11 @@
 #import "CRBoxInputModel.h"
 
 @interface CRListViewController () <UITableViewDelegate, UITableViewDataSource>
-{
-    UITableView *_mainTableView;
-    UILabel *_titleLabel;
-    NSMutableArray *_dataArr;
-}
+
+@property(nonatomic, strong) UITableView *mainTableView;
+@property(nonatomic, strong) UILabel *titleLabel;
+@property(nonatomic, strong) NSMutableArray *dataArr;
+
 @end
 
 @implementation CRListViewController
@@ -45,6 +45,12 @@
     model.name = @"Normal";
     model.imageName = @"demoImg_Normal";
     model.type = CRBoxInputModelNormalType;
+    [_dataArr addObject:model];
+    
+    model = [CRBoxInputModel new];
+    model.name = @"Placeholder";
+    model.imageName = @"demoImg_Placeholder";
+    model.type = CRBoxInputModelPlaceholderType;
     [_dataArr addObject:model];
     
     model = [CRBoxInputModel new];
@@ -80,6 +86,8 @@
 
 - (void)createUI
 {
+    __weak __typeof(self)weakSelf = self;
+    
     _titleLabel = [UILabel new];
     _titleLabel.text = @"CRBoxInputView";
     _titleLabel.textColor = color_master;
@@ -96,7 +104,8 @@
     _mainTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     [self.view addSubview:_mainTableView];
     [_mainTableView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(self->_titleLabel.mas_bottom).offset(YY_6(22));
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        make.top.equalTo(strongSelf.titleLabel.mas_bottom).offset(YY_6(22));
         make.left.right.bottom.offset(0);
     }];
 }

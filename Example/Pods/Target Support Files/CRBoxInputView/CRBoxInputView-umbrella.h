@@ -15,6 +15,8 @@
 #import "CRBoxInputCellProperty.h"
 #import "CRBoxInputView.h"
 #import "CRBoxTextView.h"
+#import "CRLineView.h"
+#import "CRSecrectImageView.h"
 
 FOUNDATION_EXPORT double CRBoxInputViewVersionNumber;
 FOUNDATION_EXPORT const unsigned char CRBoxInputViewVersionString[];

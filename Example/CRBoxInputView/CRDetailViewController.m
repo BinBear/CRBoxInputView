@@ -8,24 +8,26 @@
 
 #import "CRDetailViewController.h"
 #import <CRBoxInputView/CRBoxInputView.h>
-#import "CRBoxInputView_CustomBox.h"
-#import "CRBoxInputView_Line.h"
-#import "CRBoxInputView_SecretSymbol.h"
-#import "CRBoxInputView_SecretImage.h"
-#import "CRBoxInputView_SecretView.h"
+#import <CRBoxInputView/CRLineView.h>
+#import <CRBoxInputView/CRSecrectImageView.h>
 
+#define offXStart XX_6(35)
 @interface CRDetailViewController ()
-{
-    UIButton *_backBtn;
-    UIImageView *_bigLockImageView;
-    UILabel *_mainLabel;
-    UILabel *_subLabel;
-    UIView *_sepLineView;
-    UILabel *_descriptionLabel;
-    
-    CRBoxInputView *_boxInputView;
-    UIButton *_verifyBtn;
-}
+
+@property(nonatomic, strong) UIButton *backBtn;
+@property(nonatomic, strong) UIImageView *bigLockImageView;
+@property(nonatomic, strong) UILabel *mainLabel;
+@property(nonatomic, strong) UILabel *subLabel;
+@property(nonatomic, strong) UIView *sepLineView;
+@property(nonatomic, strong) UILabel *descriptionLabel;
+
+@property(nonatomic, strong) CRBoxInputView *boxInputView;
+@property(nonatomic, strong) UIButton *verifyBtn;
+
+@property(nonatomic, strong) UIView *menuView;
+@property(nonatomic, strong) UIButton *ifNeedSecurityBtn;
+@property(nonatomic, strong) UIButton *addBtn;
+@property(nonatomic, strong) UIButton *removeBtn;
 
 @property (strong, nonatomic) UILabel   *valueLabel;
 
@@ -58,7 +60,7 @@
 
 - (void)createUI
 {
-    CGFloat offXStart = XX_6(35);
+    __weak __typeof(self)weakSelf = self;
     
     _backBtn = [UIButton new];
     [_backBtn setImage:[UIImage imageNamed:@"backArrow"] forState:UIControlStateNormal];
@@ -86,16 +88,18 @@
     _mainLabel.font = [UIFont systemFontOfSize:24];
     [self.view addSubview:_mainLabel];
     [_mainLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
         make.left.offset(offXStart);
-        make.top.equalTo(self->_backBtn.mas_bottom).offset(13);
+        make.top.equalTo(strongSelf.backBtn.mas_bottom).offset(13);
     }];
     
     _sepLineView = [UIView new];
     _sepLineView.backgroundColor = color_master;
     [self.view addSubview:_sepLineView];
     [_sepLineView mas_makeConstraints:^(MASConstraintMaker *make) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
         make.left.offset(offXStart);
-        make.top.equalTo(self->_mainLabel.mas_bottom).offset(5);
+        make.top.equalTo(strongSelf.mainLabel.mas_bottom).offset(5);
         make.width.mas_equalTo(XX_6(166));
         make.height.mas_equalTo(2);
     }];
@@ -106,8 +110,9 @@
     _subLabel.font = [UIFont boldSystemFontOfSize:14];
     [self.view addSubview:_subLabel];
     [_subLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
         make.left.offset(offXStart);
-        make.top.equalTo(self->_sepLineView.mas_bottom).offset(2);
+        make.top.equalTo(strongSelf.sepLineView.mas_bottom).offset(2);
     }];
 
     _descriptionLabel = [UILabel new];
@@ -118,9 +123,10 @@
     _descriptionLabel.textAlignment = NSTextAlignmentCenter;
     [self.view addSubview:_descriptionLabel];
     [_descriptionLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
         make.width.mas_equalTo(XX_6(303));
         make.centerX.offset(0);
-        make.top.equalTo(self->_subLabel.mas_bottom).offset(YY_6(24));
+        make.top.equalTo(strongSelf.subLabel.mas_bottom).offset(YY_6(24));
     }];
     
     _valueLabel = [UILabel new];
@@ -129,8 +135,9 @@
     _valueLabel.text = @"Empty";
     [self.view addSubview:_valueLabel];
     [_valueLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
         make.centerX.offset(0);
-        make.top.equalTo(self->_descriptionLabel.mas_bottom).offset(3);
+        make.top.equalTo(strongSelf.descriptionLabel.mas_bottom).offset(3);
     }];
     
     CGFloat btnHeight = YY_6(54);
@@ -147,11 +154,79 @@
         make.height.mas_equalTo(btnHeight);
         make.centerX.offset(0);
     }];
+    
+    [self createIfNeedSecurityControlView];
+}
+
+- (void)createIfNeedSecurityControlView
+{
+    CGFloat btnWidth = XX_6(40);
+    
+    /// _menuView
+    _menuView = [UIView new];
+    [self.view addSubview:_menuView];
+    [_menuView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.offset(offXStart);
+        make.right.offset(-offXStart);
+        make.top.equalTo(self.verifyBtn.mas_bottom).offset(21);
+        make.height.mas_equalTo(btnWidth);
+    }];
+    
+    /// _ifNeedSecurityBtn
+    _ifNeedSecurityBtn = [UIButton new];
+    [_ifNeedSecurityBtn addTarget:self action:@selector(securityBtnEvent) forControlEvents:UIControlEventTouchUpInside];
+    _ifNeedSecurityBtn.adjustsImageWhenHighlighted = NO;
+    [_ifNeedSecurityBtn setImage:[UIImage imageNamed:@"eyeOpen"] forState:UIControlStateNormal];
+    [_ifNeedSecurityBtn setImage:[UIImage imageNamed:@"eyeClose"] forState:UIControlStateSelected];
+    [_menuView addSubview:_ifNeedSecurityBtn];
+    [_ifNeedSecurityBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.offset(0);
+        make.centerY.offset(0);
+        make.width.height.mas_equalTo(btnWidth);
+    }];
+    
+    _removeBtn = [UIButton new];
+    [_removeBtn addTarget:self action:@selector(removeEvent) forControlEvents:UIControlEventTouchUpInside];
+    [_removeBtn setImage:[UIImage imageNamed:@"cellRemove"] forState:UIControlStateNormal];
+    [_menuView addSubview:_removeBtn];
+    [_removeBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.right.offset(0);
+        make.centerY.offset(0);
+        make.width.height.mas_equalTo(btnWidth);
+    }];
+    
+    _addBtn = [UIButton new];
+    [_addBtn addTarget:self action:@selector(addEvent) forControlEvents:UIControlEventTouchUpInside];
+    [_addBtn setImage:[UIImage imageNamed:@"cellAdd"] forState:UIControlStateNormal];
+    [_menuView addSubview:_addBtn];
+    [_addBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.right.equalTo(self.removeBtn.mas_left).offset(-12);
+        make.centerY.offset(0);
+        make.width.height.mas_equalTo(btnWidth);
+    }];
 }
 
 - (void)backBtnEvent
 {
     [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)securityBtnEvent
+{
+    _boxInputView.ifNeedSecurity = !_boxInputView.ifNeedSecurity;
+    _ifNeedSecurityBtn.selected = _boxInputView.ifNeedSecurity;
+}
+
+- (void)addEvent
+{
+    [_boxInputView resetCodeLength:_boxInputView.codeLength+1 beginEdit:YES];
+}
+
+- (void)removeEvent
+{
+    if (_boxInputView.codeLength > 0) {
+        [_boxInputView resetCodeLength:_boxInputView.codeLength-1 beginEdit:YES];
+    }
 }
 
 #pragma mark - Setter & Getter
@@ -165,6 +240,12 @@
         case CRBoxInputModelNormalType:
             {
                 _boxInputView = [self generateBoxInputView_normal];
+            }
+            break;
+            
+        case CRBoxInputModelPlaceholderType:
+            {
+                _boxInputView = [self generateBoxInputView_placeholder];
             }
             break;
             
@@ -205,32 +286,43 @@
             break;
     }
     
-    __weak typeof(self) weakSelf = self;
-    _boxInputView.textDidChangeblock = ^(NSString *text, BOOL isFinished) {
-        if (text.length > 0) {
-            weakSelf.valueLabel.text = text;
-        }else{
-            weakSelf.valueLabel.text = @"Empty";
-        }
-    };
+    __weak __typeof(self)weakSelf = self;
+    if (!_boxInputView.textDidChangeblock) {
+        _boxInputView.textDidChangeblock = ^(NSString *text, BOOL isFinished) {
+            __strong __typeof(weakSelf)strongSelf = weakSelf;
+            if (text.length > 0) {
+                strongSelf.valueLabel.text = text;
+            }else{
+                strongSelf.valueLabel.text = @"Empty";
+            }
+        };
+    }
+    
     [self.view addSubview:_boxInputView];
     [_boxInputView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.width.mas_equalTo(XX_6(262));
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        make.left.mas_equalTo(offXStart);
+        make.right.mas_equalTo(-offXStart);
         make.height.mas_equalTo(YY_6(52));
-        make.centerX.offset(0);
-        make.top.equalTo(self->_bigLockImageView.mas_bottom).offset(YY_6(18));
+        make.top.equalTo(strongSelf.bigLockImageView.mas_bottom).offset(YY_6(18));
     }];
     
     [_verifyBtn mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(self->_boxInputView.mas_bottom).offset(YY_6(46));
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        make.top.equalTo(strongSelf.boxInputView.mas_bottom).offset(YY_6(46));
     }];
 }
 
 #pragma mark - Normal
 - (CRBoxInputView *)generateBoxInputView_normal
 {
-    CRBoxInputView *_boxInputView = [CRBoxInputView new];
-    [_boxInputView loadAndPrepareView];
+    CRBoxInputView *_boxInputView = [[CRBoxInputView alloc] initWithCodeLength:4];
+    _boxInputView.mainCollectionView.contentInset = UIEdgeInsetsMake(0, 20, 0, 20);
+    [_boxInputView loadAndPrepareViewWithBeginEdit:YES];
+    _boxInputView.inputType = CRInputType_Number;
+    
+    _boxInputView.inputType = CRInputType_Regex;
+    _boxInputView.customInputRegex = @"[^0-9]";
     
     if (@available(iOS 12.0, *)) {
         _boxInputView.textContentType = UITextContentTypeOneTimeCode;
@@ -241,8 +333,24 @@
     return _boxInputView;
 }
 
+- (CRBoxInputView *)generateBoxInputView_placeholder
+{
+    CRBoxInputCellProperty *cellProperty = [CRBoxInputCellProperty new];
+    cellProperty.cellPlaceholderTextColor = [UIColor colorWithRed:114/255.0 green:116/255.0 blue:124/255.0 alpha:0.3];
+    cellProperty.cellPlaceholderFont = [UIFont systemFontOfSize:20];
+    
+    CRBoxInputView *_boxInputView = [[CRBoxInputView alloc] initWithCodeLength:4];
+    _boxInputView.mainCollectionView.contentInset = UIEdgeInsetsMake(0, 20, 0, 20);
+    _boxInputView.ifNeedCursor = NO;
+    _boxInputView.placeholderText = @"露可娜娜";
+    _boxInputView.customCellProperty = cellProperty;
+    [_boxInputView loadAndPrepareViewWithBeginEdit:YES];
+    
+    return _boxInputView;
+}
+
 #pragma mark - CustomBox
-- (CRBoxInputView_CustomBox *)generateBoxInputView_customBox
+- (CRBoxInputView *)generateBoxInputView_customBox
 {
     CRBoxInputCellProperty *cellProperty = [CRBoxInputCellProperty new];
     cellProperty.cellBgColorNormal = color_FFECEC;
@@ -254,17 +362,24 @@
     cellProperty.borderWidth = 0;
     cellProperty.cellFont = [UIFont boldSystemFontOfSize:24];
     cellProperty.cellTextColor = color_master;
-    
-    CRBoxInputView_CustomBox *_boxInputView = [CRBoxInputView_CustomBox new];
+    cellProperty.configCellShadowBlock = ^(CALayer * _Nonnull layer) {
+        layer.shadowColor = [color_master colorWithAlphaComponent:0.2].CGColor;
+        layer.shadowOpacity = 1;
+        layer.shadowOffset = CGSizeMake(0, 2);
+        layer.shadowRadius = 4;
+    };
+
+    CRBoxInputView *_boxInputView = [[CRBoxInputView alloc] initWithCodeLength:4];
+    _boxInputView.mainCollectionView.contentInset = UIEdgeInsetsMake(0, 10, 0, 10);
     _boxInputView.boxFlowLayout.itemSize = CGSizeMake(XX_6(52), XX_6(52));
     _boxInputView.customCellProperty = cellProperty;
-    [_boxInputView loadAndPrepareView];
-    
+    [_boxInputView loadAndPrepareViewWithBeginEdit:YES];
+
     return _boxInputView;
 }
 
 #pragma mark - Line
-- (CRBoxInputView_Line *)generateBoxInputView_line
+- (CRBoxInputView *)generateBoxInputView_line
 {
     CRBoxInputCellProperty *cellProperty = [CRBoxInputCellProperty new];
     cellProperty.cellCursorColor = color_FFECEC;
@@ -274,17 +389,43 @@
     cellProperty.borderWidth = 0;
     cellProperty.cellFont = [UIFont boldSystemFontOfSize:24];
     cellProperty.cellTextColor = color_master;
-    
-    CRBoxInputView_Line *_boxInputView = [CRBoxInputView_Line new];
+    cellProperty.showLine = YES;
+    cellProperty.customLineViewBlock = ^CRLineView * _Nonnull{
+        CRLineView *lineView = [CRLineView new];
+        lineView.underlineColorNormal = [color_master colorWithAlphaComponent:0.3];
+        lineView.underlineColorSelected = [color_master colorWithAlphaComponent:0.7];
+        lineView.underlineColorFilled = color_master;
+        [lineView.lineView mas_remakeConstraints:^(MASConstraintMaker *make) {
+            make.height.mas_equalTo(4);
+            make.left.right.bottom.offset(0);
+        }];
+        
+        lineView.selectChangeBlock = ^(CRLineView * _Nonnull lineView, BOOL selected) {
+            if (selected) {
+                [lineView.lineView mas_updateConstraints:^(MASConstraintMaker *make) {
+                    make.height.mas_equalTo(6);
+                }];
+            } else {
+                [lineView.lineView mas_updateConstraints:^(MASConstraintMaker *make) {
+                    make.height.mas_equalTo(4);
+                }];
+            }
+        };
+
+        return lineView;
+    };
+
+    CRBoxInputView *_boxInputView = [[CRBoxInputView alloc] initWithCodeLength:4];
+    _boxInputView.mainCollectionView.contentInset = UIEdgeInsetsMake(0, 10, 0, 10);
     _boxInputView.boxFlowLayout.itemSize = CGSizeMake(XX_6(52), XX_6(52));
     _boxInputView.customCellProperty = cellProperty;
-    [_boxInputView loadAndPrepareViewWithBeginEdit:NO];
-    
+    [_boxInputView loadAndPrepareViewWithBeginEdit:YES];
+
     return _boxInputView;
 }
 
 #pragma mark - SecretSymbol
-- (CRBoxInputView_SecretSymbol *)generateBoxInputView_secretSymbol
+- (CRBoxInputView *)generateBoxInputView_secretSymbol
 {
     CRBoxInputCellProperty *cellProperty = [CRBoxInputCellProperty new];
     cellProperty.cellCursorColor = color_FFECEC;
@@ -294,19 +435,34 @@
     cellProperty.borderWidth = 0;
     cellProperty.cellFont = [UIFont boldSystemFontOfSize:24];
     cellProperty.cellTextColor = color_master;
+    cellProperty.showLine = YES;
     cellProperty.securitySymbol = @"*";//need
-    
-    CRBoxInputView_SecretSymbol *_boxInputView = [CRBoxInputView_SecretSymbol new];
+
+    CRBoxInputView *_boxInputView = [[CRBoxInputView alloc] initWithCodeLength:4];
+    _boxInputView.mainCollectionView.contentInset = UIEdgeInsetsMake(0, 10, 0, 10);
     _boxInputView.ifNeedSecurity = YES;//need
     _boxInputView.boxFlowLayout.itemSize = CGSizeMake(XX_6(52), XX_6(52));
     _boxInputView.customCellProperty = cellProperty;
-    [_boxInputView loadAndPrepareView];
+    [_boxInputView loadAndPrepareViewWithBeginEdit:NO];
+    
+    __weak __typeof(self)weakSelf = self;
+    _boxInputView.textDidChangeblock = ^(NSString *text, BOOL isFinished) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        if (text.length > 0) {
+            strongSelf.valueLabel.text = text;
+        }else{
+            strongSelf.valueLabel.text = @"Empty";
+        }
+    };
+    
+    _boxInputView.ifClearAllInBeginEditing = YES;
+    [_boxInputView reloadInputString:@"5678"];
     
     return _boxInputView;
 }
 
 #pragma mark - SecretImage
-- (CRBoxInputView_SecretImage *)generateBoxInputView_secretImage
+- (CRBoxInputView *)generateBoxInputView_secretImage
 {
     CRBoxInputCellProperty *cellProperty = [CRBoxInputCellProperty new];
     cellProperty.cellCursorColor = color_FFECEC;
@@ -316,19 +472,28 @@
     cellProperty.borderWidth = 0;
     cellProperty.cellFont = [UIFont boldSystemFontOfSize:24];
     cellProperty.cellTextColor = color_master;
+    cellProperty.showLine = YES;
     cellProperty.securityType = CRBoxSecurityCustomViewType;//need
-    
-    CRBoxInputView_SecretImage *_boxInputView = [CRBoxInputView_SecretImage new];
+    cellProperty.customSecurityViewBlock = ^UIView * _Nonnull{
+        CRSecrectImageView *secrectImageView = [CRSecrectImageView new];
+        secrectImageView.image = [UIImage imageNamed:@"smallLock"];
+        secrectImageView.imageWidth = 23;
+        secrectImageView.imageHeight = 27;
+        return secrectImageView;
+    };
+
+    CRBoxInputView *_boxInputView = [[CRBoxInputView alloc] initWithCodeLength:4];
+    _boxInputView.mainCollectionView.contentInset = UIEdgeInsetsMake(0, 10, 0, 10);
     _boxInputView.ifNeedSecurity = YES;//need
     _boxInputView.boxFlowLayout.itemSize = CGSizeMake(XX_6(52), XX_6(52));
     _boxInputView.customCellProperty = cellProperty;
-    [_boxInputView loadAndPrepareView];
-    
+    [_boxInputView loadAndPrepareViewWithBeginEdit:YES];
+
     return _boxInputView;
 }
 
 #pragma mark - SecretView
-- (CRBoxInputView_SecretView *)generateBoxInputView_secretView
+- (CRBoxInputView *)generateBoxInputView_secretView
 {
     CRBoxInputCellProperty *cellProperty = [CRBoxInputCellProperty new];
     cellProperty.cellCursorColor = color_FFECEC;
@@ -338,14 +503,34 @@
     cellProperty.borderWidth = 0;
     cellProperty.cellFont = [UIFont boldSystemFontOfSize:24];
     cellProperty.cellTextColor = color_master;
+    cellProperty.showLine = YES;
     cellProperty.securityType = CRBoxSecurityCustomViewType;//need
-    
-    CRBoxInputView_SecretView *_boxInputView = [CRBoxInputView_SecretView new];
+    cellProperty.customSecurityViewBlock = ^UIView * _Nonnull{
+        UIView *customSecurityView = [UIView new];
+        customSecurityView.backgroundColor = [UIColor clearColor];
+
+        // circleView
+        static CGFloat circleViewWidth = 20;
+        UIView *circleView = [UIView new];
+        circleView.backgroundColor = color_master;
+        circleView.layer.cornerRadius = 4;
+        [customSecurityView addSubview:circleView];
+        [circleView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.width.height.mas_equalTo(circleViewWidth);
+            make.centerX.offset(0);
+            make.centerY.offset(0);
+        }];
+
+        return customSecurityView;
+    };
+
+    CRBoxInputView *_boxInputView = [[CRBoxInputView alloc] initWithCodeLength:4];
+    _boxInputView.mainCollectionView.contentInset = UIEdgeInsetsMake(0, 10, 0, 10);
     _boxInputView.ifNeedSecurity = YES;//need
     _boxInputView.boxFlowLayout.itemSize = CGSizeMake(XX_6(52), XX_6(52));
     _boxInputView.customCellProperty = cellProperty;
-    [_boxInputView loadAndPrepareView];
-    
+    [_boxInputView loadAndPrepareViewWithBeginEdit:YES];
+
     return _boxInputView;
 }
 

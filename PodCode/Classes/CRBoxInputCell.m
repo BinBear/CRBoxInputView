@@ -7,7 +7,8 @@
 //
 
 #import "CRBoxInputCell.h"
-#import "Masonry.h"
+#import <Masonry/Masonry.h>
+#import "CRLineView.h"
 
 @interface CRBoxInputCell ()
 {
@@ -17,6 +18,8 @@
 @property (strong, nonatomic) UILabel *valueLabel;
 @property (strong, nonatomic) CABasicAnimation *opacityAnimation;
 @property (strong, nonatomic) UIView *customSecurityView;
+
+@property (strong, nonatomic) CRLineView *lineView;
 
 @end
 
@@ -72,6 +75,29 @@
     _valueLabel.hidden = NO;
     [self hideCustomSecurityView];
     
+    // 默认字体配置
+    __weak typeof(self) weakSelf = self;
+    void (^defaultTextConfig)(void) = ^{
+        if (weakSelf.boxInputCellProperty.cellFont) {
+            weakSelf.valueLabel.font = weakSelf.boxInputCellProperty.cellFont;
+        }
+        
+        if (weakSelf.boxInputCellProperty.cellTextColor) {
+            weakSelf.valueLabel.textColor = weakSelf.boxInputCellProperty.cellTextColor;
+        }
+    };
+    
+    // 占位字符字体配置
+    void (^placeholderTextConfig)(void) = ^{
+        if (weakSelf.boxInputCellProperty.cellFont) {
+            weakSelf.valueLabel.font = weakSelf.boxInputCellProperty.cellPlaceholderFont;
+        }
+        
+        if (weakSelf.boxInputCellProperty.cellTextColor) {
+            weakSelf.valueLabel.textColor = weakSelf.boxInputCellProperty.cellPlaceholderTextColor;
+        }
+    };
+    
     BOOL hasOriginValue = self.boxInputCellProperty.originValue && self.boxInputCellProperty.originValue.length > 0;
     if (hasOriginValue) {
         if (self.boxInputCellProperty.ifShowSecurity) {
@@ -85,9 +111,22 @@
         }else{
             _valueLabel.text = self.boxInputCellProperty.originValue;
         }
+        defaultTextConfig();
     }else{
-        _valueLabel.text = @"";
+        BOOL hasPlaceholderText = self.boxInputCellProperty.cellPlaceholderText && self.boxInputCellProperty.cellPlaceholderText.length > 0;
+        // 有占位字符
+        if (hasPlaceholderText) {
+            _valueLabel.text = self.boxInputCellProperty.cellPlaceholderText;
+            placeholderTextConfig();
+        }
+        // 空
+        else{
+            _valueLabel.text = @"";
+            defaultTextConfig();
+        }
     }
+    
+    
 }
 
 #pragma mark - Custom security view
@@ -105,7 +144,10 @@
 
 - (void)hideCustomSecurityView
 {
-    self.customSecurityView.alpha = 0;
+    // Must add this judge. Otherwise _customSecurityView maybe null, and cause error.
+    if (_customSecurityView) {
+        self.customSecurityView.alpha = 0;
+    }
 }
 
 #pragma mark - Setter & Getter
@@ -131,8 +173,45 @@
         self.layer.borderColor = self.boxInputCellProperty.cellBorderColorSelected.CGColor;
         self.backgroundColor = self.boxInputCellProperty.cellBgColorSelected;
     }else{
-        self.layer.borderColor = self.boxInputCellProperty.cellBorderColorNormal.CGColor;
-        self.backgroundColor = self.boxInputCellProperty.cellBgColorNormal;
+        BOOL hasFill = _valueLabel.text.length > 0 ? YES : NO;
+        UIColor *cellBorderColor = self.boxInputCellProperty.cellBorderColorNormal;
+        UIColor *cellBackgroundColor = self.boxInputCellProperty.cellBgColorNormal;
+        if (hasFill) {
+            if (self.boxInputCellProperty.cellBorderColorFilled) {
+                cellBorderColor = self.boxInputCellProperty.cellBorderColorFilled;
+            }
+            if (self.boxInputCellProperty.cellBgColorFilled) {
+                cellBackgroundColor = self.boxInputCellProperty.cellBgColorFilled;
+            }
+        }
+        self.layer.borderColor = cellBorderColor.CGColor;
+        self.backgroundColor = cellBackgroundColor;
+    }
+    
+    if (_lineView) {
+        // 未选中
+        if (!selected) {
+            if (self.boxInputCellProperty.originValue.length > 0 && _lineView.underlineColorFilled) {
+                // 有内容
+                _lineView.lineView.backgroundColor = _lineView.underlineColorFilled;
+            }else if (_lineView.underlineColorNormal) {
+                // 无内容
+                _lineView.lineView.backgroundColor = _lineView.underlineColorNormal;
+            }else{
+                // 默认
+                _lineView.lineView.backgroundColor = CRColorMaster;
+            }
+        }
+        // 已选中
+        else if (selected && _lineView.underlineColorSelected){
+            _lineView.lineView.backgroundColor = _lineView.underlineColorSelected;
+        }
+        // 默认
+        else{
+            _lineView.lineView.backgroundColor = CRColorMaster;
+        }
+        
+        _lineView.selected = selected;
     }
     
     if (_ifNeedCursor) {
@@ -160,45 +239,43 @@
     self.layer.cornerRadius = boxInputCellProperty.cornerRadius;
     self.layer.borderWidth = boxInputCellProperty.borderWidth;
     
-    if (boxInputCellProperty.cellFont) {
-        _valueLabel.font = boxInputCellProperty.cellFont;
-    }
-    
-    if (boxInputCellProperty.cellTextColor) {
-        _valueLabel.textColor = boxInputCellProperty.cellTextColor;
-    }
-    
     [self valueLabelLoadData];
 }
 
 - (UIView *)customSecurityView
 {
     if (!_customSecurityView) {
-        _customSecurityView = [self createCustomSecurityView];
+        // Compatiable for 0.19 verion and earlier.
+        if ([self respondsToSelector:@selector(createCustomSecurityView)]) {
+            _customSecurityView = [self createCustomSecurityView];
+        }
+        else if(_boxInputCellProperty.customSecurityViewBlock){
+            NSAssert(_boxInputCellProperty.customSecurityViewBlock, @"customSecurityViewBlock can not be null！");
+            _customSecurityView = _boxInputCellProperty.customSecurityViewBlock();
+        }
     }
     
     return _customSecurityView;
 }
 
-#pragma mark - You can rewrite
-- (UIView *)createCustomSecurityView
+- (void)layoutSubviews
 {
-    UIView *customSecurityView = [UIView new];
-    customSecurityView.backgroundColor = [UIColor clearColor];
+    __weak typeof(self) weakSelf = self;
     
-    // circleView
-    static CGFloat circleViewWidth = 20;
-    UIView *circleView = [UIView new];
-    circleView.backgroundColor = [UIColor orangeColor];
-    circleView.layer.cornerRadius = circleViewWidth / 2;
-    [customSecurityView addSubview:circleView];
-    [circleView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.width.height.mas_equalTo(circleViewWidth);
-        make.centerX.offset(0);
-        make.centerY.offset(0);
-    }];
+    if (_boxInputCellProperty.showLine && !_lineView) {
+        NSAssert(_boxInputCellProperty.customLineViewBlock, @"customLineViewBlock can not be null！");
+        _lineView = _boxInputCellProperty.customLineViewBlock();
+        [self.contentView addSubview:_lineView];
+        [_lineView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.left.right.bottom.top.offset(0);
+        }];
+    }
     
-    return customSecurityView;
+    if (_boxInputCellProperty.configCellShadowBlock) {
+        _boxInputCellProperty.configCellShadowBlock(weakSelf.layer);
+    }
+    
+    [super layoutSubviews];
 }
 
 @end

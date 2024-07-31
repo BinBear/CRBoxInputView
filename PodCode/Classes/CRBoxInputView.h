@@ -29,7 +29,7 @@ typedef NS_ENUM(NSInteger, CRInputType) {
 
 typedef void(^TextDidChangeblock)(NSString * _Nullable text, BOOL isFinished);
 typedef void(^TextEditStatusChangeblock)(CRTextEditStatus editStatus);
-typedef NSString *(^TextCustomProcessblock)(NSString * _Nullable text);
+typedef NSString *_Nullable(^TextCustomProcessblock)(NSString * _Nullable text);
 
 @interface CRBoxInputView : UIView
 
@@ -162,4 +162,9 @@ default: @""
 // Init
 - (instancetype _Nullable )initWithCodeLength:(NSInteger)codeLength;
 
+// 开始编辑
+- (void)beginEdit;
+
+// 结束编辑
+- (void)endEdit;
 @end
